@@ -73,7 +73,7 @@ function AwaleScreen:init()
     end
     ScreenBase.init(self)  -- calls buildLayout()
     if self:_isAITurn() then
-        UIManager:scheduleIn(0.1, function() self:triggerAI() end)
+        self:schedule(0.1, function() self:triggerAI() end)
     end
 end
 
@@ -227,7 +227,7 @@ function AwaleScreen:triggerAI()
     self.board_widget:refresh()
     self:updateStatus(_("AI is thinking..."))
     local level = self.plugin:getSetting("difficulty", "medium")
-    UIManager:scheduleIn(0.05, function()
+    self:schedule(0.05, function()
         self.ai_pending = false
         if not self:_isAITurn() then return end
         local m = self.board:getAIMove(level)
@@ -258,12 +258,14 @@ function AwaleScreen:onUndo()
 end
 
 function AwaleScreen:onNewGame()
+    self:cancelScheduled()  -- an AI move still pending belongs to the old game
+    self.ai_pending = false
     self.board:reset()
     self.plugin:saveState(self:serializeState())
     self:buildLayout()
     UIManager:setDirty(self, function() return "ui", self.dimen end)
     if self:_isAITurn() then
-        UIManager:scheduleIn(0.1, function() self:triggerAI() end)
+        self:schedule(0.1, function() self:triggerAI() end)
     end
 end
 
